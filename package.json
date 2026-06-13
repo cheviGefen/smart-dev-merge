@@ -1,0 +1,31 @@
+{
+  "name": "smart-dev-merge",
+  "version": "1.0.0",
+  "description": "GitHub Action &amp; TS Server that leverage AI to automatically approve low-risk merges or enforce human reviews for sensitive code changes.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cheviGefen/smart-dev-merge.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cheviGefen/smart-dev-merge/issues"
+  },
+  "homepage": "https://github.com/cheviGefen/smart-dev-merge#readme",
+  "dependencies": {
+    "@google/genai": "^2.8.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
+  }
+}
