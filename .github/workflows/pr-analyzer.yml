@@ -42,8 +42,10 @@ jobs:
 
           echo "Sending PR #${{ github.event.pull_request.number }} to ${SERVER_URL}/analyze-pr"
           RESPONSE_FILE="$(mktemp)"
+          CURL_EXIT=0
 
-          HTTP_CODE="$(curl --silent --show-error --fail-with-body \
+          set +e
+          HTTP_CODE="$(curl --silent --show-error \
             -X POST "${SERVER_URL}/analyze-pr" \
             -H "Content-Type: application/json" \
             -H "Bypass-Tunnel-Reminder: true" \
@@ -60,8 +62,18 @@ jobs:
 }
 JSON
           )"
+          CURL_EXIT=$?
+          set -e
 
-          echo "HTTP_STATUS=${HTTP_CODE}"
+          echo "HTTP_STATUS=${HTTP_CODE:-<none>}"
+          echo "CURL_EXIT=${CURL_EXIT}"
           echo "Response body:"
           cat "$RESPONSE_FILE"
+
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "curl failed with exit code ${CURL_EXIT}"
+            rm -f "$RESPONSE_FILE"
+            exit "$CURL_EXIT"
+          fi
+
           rm -f "$RESPONSE_FILE"
