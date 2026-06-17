@@ -35,6 +35,7 @@ jobs:
         run: |
           curl -X POST "${{ secrets.SERVER_URL }}/analyze-pr" \
             -H "Content-Type: application/json" \
+            -H "Bypass-Tunnel-Reminder: true" \
             -d '{
               "owner": "${{ github.repository_owner }}",
               "repo": "${{ github.event.repository.name }}",
