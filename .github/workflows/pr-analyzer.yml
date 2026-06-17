@@ -31,6 +31,15 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       # 3. שליחת הנתונים ב-POST לשרת ה-TypeScript שלך
+      - name: Check Server Health
+        run: |
+          set -euo pipefail
+          echo "Checking server health at ${SERVER_URL}/ping"
+          curl --silent --show-error --fail-with-body \
+            --connect-timeout 15 \
+            --max-time 60 \
+            "${SERVER_URL}/ping"
+
       - name: Send PR Data to AI Server
         env:
           SERVER_URL: ${{ secrets.SERVER_URL }}
@@ -60,10 +69,18 @@ jobs:
               codeDiff: $codeDiff
             }')"
 
+          echo "PAYLOAD_BYTES=${#PAYLOAD}"
+
           set +e
           HTTP_CODE="$(curl --silent --show-error --fail-with-body \
+            --connect-timeout 30 \
+            --max-time 600 \
+            --retry 2 \
+            --retry-delay 3 \
+            --retry-all-errors \
             -X POST "${SERVER_URL}/analyze-pr" \
             -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
             -H "Bypass-Tunnel-Reminder: true" \
             -w "%{http_code}" \
             -o "$RESPONSE_FILE" \
