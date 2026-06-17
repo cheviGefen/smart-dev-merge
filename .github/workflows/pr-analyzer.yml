@@ -44,6 +44,22 @@ jobs:
           RESPONSE_FILE="$(mktemp)"
           CURL_EXIT=0
 
+          PAYLOAD="$(jq -n \
+            --arg owner "${{ github.repository_owner }}" \
+            --arg repo "${{ github.event.repository.name }}" \
+            --argjson prNumber "${{ github.event.pull_request.number }}" \
+            --arg prTitle "$PR_TITLE" \
+            --arg prDescription "$PR_BODY" \
+            --arg codeDiff "$CODE_DIFF" \
+            '{
+              owner: $owner,
+              repo: $repo,
+              prNumber: $prNumber,
+              prTitle: $prTitle,
+              prDescription: $prDescription,
+              codeDiff: $codeDiff
+            }')"
+
           set +e
           HTTP_CODE="$(curl --silent --show-error \
             -X POST "${SERVER_URL}/analyze-pr" \
@@ -51,16 +67,7 @@ jobs:
             -H "Bypass-Tunnel-Reminder: true" \
             -w "%{http_code}" \
             -o "$RESPONSE_FILE" \
-            -d @- <<JSON
-{
-  "owner": "${{ github.repository_owner }}",
-  "repo": "${{ github.event.repository.name }}",
-  "prNumber": ${{ github.event.pull_request.number }},
-  "prTitle": $(echo -n "$PR_TITLE" | jq -R .),
-  "prDescription": $(echo -n "$PR_BODY" | jq -R .),
-  "codeDiff": $(echo -n "$CODE_DIFF" | jq -R .)
-}
-JSON
+            -d "$PAYLOAD"
           )"
           CURL_EXIT=$?
           set -e
