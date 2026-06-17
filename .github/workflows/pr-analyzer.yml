@@ -33,18 +33,35 @@ jobs:
       # 3. שליחת הנתונים ב-POST לשרת ה-TypeScript שלך
       - name: Send PR Data to AI Server
         env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           CODE_DIFF: ${{ steps.get_diff.outputs.diff }}
         run: |
-          curl -X POST "${{ secrets.SERVER_URL }}/analyze-pr" \
+          set -euo pipefail
+
+          echo "Sending PR #${{ github.event.pull_request.number }} to ${SERVER_URL}/analyze-pr"
+          RESPONSE_FILE="$(mktemp)"
+
+          HTTP_CODE="$(curl --silent --show-error --fail-with-body \
+            -X POST "${SERVER_URL}/analyze-pr" \
             -H "Content-Type: application/json" \
             -H "Bypass-Tunnel-Reminder: true" \
-            -d "{
-              \"owner\": \"${{ github.repository_owner }}\",
-              \"repo\": \"${{ github.event.repository.name }}\",
-              \"prNumber\": ${{ github.event.pull_request.number }},
-              \"prTitle\": $(echo -n "$PR_TITLE" | jq -R .),
-              \"prDescription\": $(echo -n "$PR_BODY" | jq -R .),
-              \"codeDiff\": $(echo -n "$CODE_DIFF" | jq -R .)
-            }"
+            -w "%{http_code}" \
+            -o "$RESPONSE_FILE" \
+            -d @- <<JSON
+{
+  "owner": "${{ github.repository_owner }}",
+  "repo": "${{ github.event.repository.name }}",
+  "prNumber": ${{ github.event.pull_request.number }},
+  "prTitle": $(echo -n "$PR_TITLE" | jq -R .),
+  "prDescription": $(echo -n "$PR_BODY" | jq -R .),
+  "codeDiff": $(echo -n "$CODE_DIFF" | jq -R .)
+}
+JSON
+          )"
+
+          echo "HTTP_STATUS=${HTTP_CODE}"
+          echo "Response body:"
+          cat "$RESPONSE_FILE"
+          rm -f "$RESPONSE_FILE"

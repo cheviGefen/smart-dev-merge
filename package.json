@@ -1,5 +1,6 @@
 {
   "name": "smart-dev-merge",
+  "type": "module",
   "version": "1.0.0",
   "description": "GitHub Action &amp; TS Server that leverage AI to automatically approve low-risk merges or enforce human reviews for sensitive code changes.",
   "main": "index.js",
