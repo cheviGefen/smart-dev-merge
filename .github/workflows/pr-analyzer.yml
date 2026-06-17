@@ -32,15 +32,19 @@ jobs:
 
       # 3. שליחת הנתונים ב-POST לשרת ה-TypeScript שלך
       - name: Send PR Data to AI Server
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          CODE_DIFF: ${{ steps.get_diff.outputs.diff }}
         run: |
           curl -X POST "${{ secrets.SERVER_URL }}/analyze-pr" \
             -H "Content-Type: application/json" \
             -H "Bypass-Tunnel-Reminder: true" \
-            -d '{
-              "owner": "${{ github.repository_owner }}",
-              "repo": "${{ github.event.repository.name }}",
-              "prNumber": ${{ github.event.pull_request.number }},
-              "prTitle": ${{ toJson(github.event.pull_request.title) }},
-              "prDescription": ${{ toJson(github.event.pull_request.body) }},
-              "codeDiff": ${{ toJson(steps.get_diff.outputs.diff) }}
-            }'
+            -d "{
+              \"owner\": \"${{ github.repository_owner }}\",
+              \"repo\": \"${{ github.event.repository.name }}\",
+              \"prNumber\": ${{ github.event.pull_request.number }},
+              \"prTitle\": $(echo -n "$PR_TITLE" | jq -R .),
+              \"prDescription\": $(echo -n "$PR_BODY" | jq -R .),
+              \"codeDiff\": $(echo -n "$CODE_DIFF" | jq -R .)
+            }"
