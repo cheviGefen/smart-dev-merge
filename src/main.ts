@@ -147,7 +147,6 @@ app.get('/ping', (req, res) => {
 
 app.post('/analyze-pr', async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("in /analyze-pr endpoint");
     const { owner, repo, prNumber, prTitle, prDescription, codeDiff } = req.body;
 
     console.log(

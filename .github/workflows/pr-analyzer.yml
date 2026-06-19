@@ -12,6 +12,10 @@ jobs:
     permissions:
       contents: read
 
+    # הגדרת משתני סביבה ברמת הג'וב כולו - חוסך כתיבה כפולה
+    env:
+      SERVER_URL: ${{ secrets.SERVER_URL }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,12 +29,12 @@ jobs:
           # מוציא את ה-Diff בין ענף המקור לענף היעד (develop)
           DIFF=$(git diff origin/${{ github.base_ref }}...HEAD)
           
-          # טיפול בבעיית תווים מיוחדים וירידות שורה עבור GitHub Actions Actions Outputs
+          # טיפול בבעיית תווים מיוחדים וירידות שורה עבור GitHub Actions Outputs
           echo "diff<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      # 3. שליחת הנתונים ב-POST לשרת ה-TypeScript שלך
+      # 3. בדיקת זמינות השרת לפני שליחתPayload כבד
       - name: Check Server Health
         run: |
           set -euo pipefail
@@ -42,7 +46,6 @@ jobs:
 
       - name: Send PR Data to AI Server
         env:
-          SERVER_URL: ${{ secrets.SERVER_URL }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           CODE_DIFF: ${{ steps.get_diff.outputs.diff }}
