@@ -1,0 +1,25 @@
+# Multi-stage Dockerfile for building and running the TypeScript Node app
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Install dependencies (including devDeps for the build)
+COPY package*.json ./
+RUN npm ci
+
+# Copy source and compile TypeScript to ./dist
+COPY . .
+RUN npx tsc -p tsconfig.json
+
+FROM node:20-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Install only production dependencies
+COPY --from=build /app/package*.json ./
+RUN npm ci --omit=dev
+
+# Copy compiled output
+COPY --from=build /app/dist ./dist
+
+EXPOSE 3000
+CMD ["node", "dist/main.js"]
