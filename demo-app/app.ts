@@ -10,6 +10,3 @@
  */
 
 let i: number = 0;
-while(true) {
-    i++;
-}
