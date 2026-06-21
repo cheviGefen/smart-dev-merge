@@ -109,6 +109,8 @@ jobs:
           fi
 
           echo "### 🤖 AI Gatekeeper Analysis" >> $GITHUB_STEP_SUMMARY
-          jq -r '.summary' "$RESPONSE_FILE" >> $GITHUB_STEP_SUMMARY
+          echo "**Risk Level:** $(jq -r '.data.risk' "$RESPONSE_FILE")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.reason' "$RESPONSE_FILE" >> $GITHUB_STEP_SUMMARY
 
           rm -f "$RESPONSE_FILE"
