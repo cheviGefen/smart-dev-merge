@@ -60,6 +60,8 @@ app.post('/analyze-pr', async (req: Request, res: Response) => {
       codeDiff,
     });
 
+    console.log(analysisResult);
+
     res.json({
       success: true,
       data: analysisResult,

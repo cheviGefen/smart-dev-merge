@@ -12,7 +12,6 @@ jobs:
     permissions:
       contents: read
 
-    # הגדרת משתני סביבה ברמת הג'וב כולו - חוסך כתיבה כפולה
     env:
       SERVER_URL: ${{ secrets.SERVER_URL }}
 
@@ -108,5 +107,10 @@ jobs:
             rm -f "$RESPONSE_FILE"
             exit "$CURL_EXIT"
           fi
+
+          echo "### 🤖 AI Gatekeeper Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "**Risk Level:** $(jq -r '.data.risk' "$RESPONSE_FILE")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          jq -r '.data.reason' "$RESPONSE_FILE" >> $GITHUB_STEP_SUMMARY
 
           rm -f "$RESPONSE_FILE"
