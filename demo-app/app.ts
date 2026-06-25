@@ -11,3 +11,4 @@
 
 let i: number = 0;
 i++;
+i+=2;
