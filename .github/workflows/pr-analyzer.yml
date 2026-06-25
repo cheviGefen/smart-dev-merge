@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write # ◄ חובה בשביל שהבוט יוכל לתת Approve
 
     env:
       SERVER_URL: ${{ secrets.SERVER_URL }}
@@ -33,7 +34,7 @@ jobs:
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      # 3. בדיקת זמינות השרת לפני שליחתPayload כבד
+      # 3. בדיקת זמינות השרת לפני שליחת Payload כבד
       - name: Check Server Health
         run: |
           set -euo pipefail
@@ -48,6 +49,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           CODE_DIFF: ${{ steps.get_diff.outputs.diff }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # ◄ חובה בשביל פקודת ה-gh CLI
         run: |
           set -euo pipefail
 
@@ -108,9 +110,29 @@ jobs:
             exit "$CURL_EXIT"
           fi
 
+          RISK_LEVEL="$(jq -r '.data.risk' "$RESPONSE_FILE")"
+
           echo "### 🤖 AI Gatekeeper Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "**Risk Level:** $(jq -r '.data.risk' "$RESPONSE_FILE")" >> $GITHUB_STEP_SUMMARY
+          echo "**Risk Level:** $RISK_LEVEL" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           jq -r '.data.reason' "$RESPONSE_FILE" >> $GITHUB_STEP_SUMMARY
 
+
+          if [ "$RISK_LEVEL" = "HIGH" ]; then
+            echo "::error::Automated block: AI detected HIGH risk components in this PR."
+            rm -f "$RESPONSE_FILE"
+            exit 1
+          fi
+
+          if [ "$RISK_LEVEL" = "MEDIUM" ]; then
+            echo "::warning::AI evaluated this PR as MEDIUM risk. Review recommended but not blocking workflow."
+            echo "A human reviewer must manually approve this PR due to MEDIUM risk."
+          fi
+
+          if [ "$RISK_LEVEL" = "LOW" ]; then
+            echo "::notice::AI evaluated this PR as LOW risk. Proceeding with automated approval!"
+            
+            gh pr review "${{ github.event.pull_request.number }}" --approve --body "🤖 AI Gatekeeper: Low risk detected. Auto-approving this Pull Request."
+          fi
+          
           rm -f "$RESPONSE_FILE"
