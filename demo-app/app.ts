@@ -12,3 +12,7 @@
 let i: number = 0;
 i++;
 i+=2;
+
+while (true) {
+    i**i;
+}
